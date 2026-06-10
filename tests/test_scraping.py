@@ -2487,7 +2487,8 @@ class TestStripConversationChrome:
         "Maximize compose field\n"
         "Attach an image to your conversation with Grace Hopper\n"
         "Open GIF Keyboard\n"
-        "Send"
+        "Send\n"
+        "Open send options"
     )
 
     def test_strips_sidebar_and_composer(self):
@@ -2505,7 +2506,7 @@ class TestStripConversationChrome:
         assert strip_conversation_chrome(text) == self.THREAD
 
     def test_missing_thread_header_strips_only_composer(self):
-        text = self.THREAD + "\nMaximize compose field\nSend"
+        text = self.THREAD + "\nMaximize compose field\nOpen send options"
         assert strip_conversation_chrome(text) == self.THREAD
 
     def test_quoted_composer_string_in_message_survives(self):
@@ -2514,12 +2515,48 @@ class TestStripConversationChrome:
             "Maximize compose field\n"
             "is the label I keep seeing\n"
             "Maximize compose field\n"
-            "Send"
+            "Open send options"
         )
         assert (
             strip_conversation_chrome(text)
             == "Maximize compose field\nis the label I keep seeing"
         )
+
+    def test_quoted_composer_without_companions_does_not_truncate(self):
+        text = (
+            "Open the options list in your conversation with Grace Hopper and Ada Lovelace\n"
+            "Hello!\n"
+            "Maximize compose field\n"
+            "is what the button says"
+        )
+        assert (
+            strip_conversation_chrome(text)
+            == "Hello!\nMaximize compose field\nis what the button says"
+        )
+
+    def test_quoted_thread_header_in_message_keeps_earlier_messages(self):
+        text = (
+            "Load more conversations\n"
+            "Grace Hopper\n"
+            "Open the options list in your conversation with Grace Hopper and Ada Lovelace\n"
+            "Hello!\n"
+            "Open the options list in your conversation with is a label I quoted\n"
+            "Bye!\n"
+            "Maximize compose field\n"
+            "Open send options"
+        )
+        assert strip_conversation_chrome(text) == (
+            "Hello!\n"
+            "Open the options list in your conversation with is a label I quoted\n"
+            "Bye!"
+        )
+
+    def test_sidebar_end_without_thread_header_still_strips_sidebar(self):
+        text = (
+            "Ada: Preview belonging to a different conversation\n"
+            "Load more conversations\n" + self.THREAD
+        )
+        assert strip_conversation_chrome(text) == self.THREAD
 
     def test_unknown_locale_returns_unchanged(self):
         assert strip_conversation_chrome(self.PAGE, locale="de") == self.PAGE
@@ -3782,7 +3819,7 @@ class TestGetConversation:
             "Open the options list in your conversation with Ada and Grace\n"
             "Hello!\n"
             "Maximize compose field\n"
-            "Send"
+            "Open send options"
         )
         extractor = LinkedInExtractor(mock_page)
         with (

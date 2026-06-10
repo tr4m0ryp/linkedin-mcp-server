@@ -464,15 +464,37 @@ def _truncate_linkedin_noise(text: str) -> str:
 # Rules). BrowserManager forces the context locale to en-US (core/browser.py),
 # so the "en" entry is the operative one; a locale without a table entry
 # passes through unstripped.
-_MESSAGING_CHROME_STRINGS: dict[str, dict[str, str]] = {
-    "en": {
-        # Screen-reader label on the options dropdown; appears once per
-        # sidebar entry and once in the opened thread's header, so the last
-        # occurrence before the composer marks the end of the page chrome.
-        "thread_header_prefix": "Open the options list in your conversation with",
-        # First control of the trailing message-composer block.
-        "composer_start": "Maximize compose field",
-    },
+@dataclass(frozen=True)
+class _MessagingChromeTable:
+    # Sidebar pagination control; the last line of the inbox sidebar. Pins
+    # the thread header so quoted UI text inside messages can't move the
+    # start boundary.
+    sidebar_end: str
+    # Screen-reader label on the options dropdown; appears once per sidebar
+    # entry and once in the opened thread's header. The thread's own line is
+    # the first occurrence after ``sidebar_end``.
+    thread_header_prefix: str
+    # First control of the trailing message-composer block.
+    composer_start: str
+    # Other controls of the composer block. At least one must follow a
+    # ``composer_start`` candidate to confirm it is the real composer rather
+    # than a message quoting the label.
+    composer_companions: tuple[str, ...]
+
+
+_MESSAGING_CHROME_STRINGS: dict[str, _MessagingChromeTable] = {
+    "en": _MessagingChromeTable(
+        sidebar_end="Load more conversations",
+        thread_header_prefix="Open the options list in your conversation with",
+        composer_start="Maximize compose field",
+        composer_companions=(
+            "Attach an image to your conversation with",
+            "Attach a file to your conversation with",
+            "Open GIF Keyboard",
+            "Open Emoji Keyboard",
+            "Open send options",
+        ),
+    ),
 }
 
 
@@ -482,9 +504,10 @@ def strip_conversation_chrome(text: str, locale: str = "en") -> str:
     A conversation page's innerText embeds the thread between three chrome
     blocks: the messaging header, the inbox sidebar (which previews *other*
     conversations), and the trailing message composer. Drops everything
-    through the last thread-header line and everything from the last
-    composer line onward. Each boundary independently falls back to keeping
-    the text when its marker is absent (unknown locale, layout change).
+    through the thread-header line and everything from the composer onward.
+    Each boundary independently falls back to keeping the text when its
+    marker is absent (unknown locale, layout change), so a failed match
+    leaks chrome rather than dropping messages.
     """
     table = _MESSAGING_CHROME_STRINGS.get(locale)
     if table is None:
@@ -492,19 +515,44 @@ def strip_conversation_chrome(text: str, locale: str = "en") -> str:
 
     lines = text.splitlines()
 
-    # Last exact composer line wins so a message that merely quotes the
-    # string can't truncate the thread early.
+    # End boundary: the last composer-label line, accepted only when another
+    # composer control follows it. A message that merely quotes the label has
+    # no trailing controls and falls through to the missing-marker fallback.
     end = len(lines)
     for i in range(len(lines) - 1, -1, -1):
-        if lines[i].strip() == table["composer_start"]:
+        if lines[i].strip() != table.composer_start:
+            continue
+        if any(
+            lines[j].strip().startswith(table.composer_companions)
+            for j in range(i + 1, len(lines))
+        ):
             end = i
-            break
+        break
 
+    # Start boundary: the sidebar's pagination line, when present, pins the
+    # real thread header as the first options line after it; quoted UI text
+    # inside messages can no longer pull the boundary into the thread. The
+    # sidebar omits the pagination control when there are few conversations —
+    # then fall back to the last options line before the composer.
     start = 0
-    for i in range(end - 1, -1, -1):
-        if lines[i].strip().startswith(table["thread_header_prefix"]):
-            start = i + 1
-            break
+    sidebar_end = next(
+        (i for i in range(end) if lines[i].strip() == table.sidebar_end), None
+    )
+    if sidebar_end is not None:
+        header = next(
+            (
+                i
+                for i in range(sidebar_end + 1, end)
+                if lines[i].strip().startswith(table.thread_header_prefix)
+            ),
+            None,
+        )
+        start = (header + 1) if header is not None else sidebar_end + 1
+    else:
+        for i in range(end - 1, -1, -1):
+            if lines[i].strip().startswith(table.thread_header_prefix):
+                start = i + 1
+                break
 
     return "\n".join(lines[start:end]).strip()
 
@@ -3195,8 +3243,11 @@ class LinkedInExtractor:
 
         raw_result = await self._extract_root_content(["main"])
         raw = raw_result["text"]
-        cleaned = strip_linkedin_noise(raw) if raw else ""
-        cleaned = strip_conversation_chrome(cleaned) if cleaned else ""
+        # Conversation chrome first: a sidebar preview containing a generic
+        # noise marker would otherwise truncate the page before the thread
+        # markers are ever seen.
+        cleaned = strip_conversation_chrome(raw) if raw else ""
+        cleaned = strip_linkedin_noise(cleaned) if cleaned else ""
         references = (
             build_references(raw_result["references"], "conversation")
             if cleaned
