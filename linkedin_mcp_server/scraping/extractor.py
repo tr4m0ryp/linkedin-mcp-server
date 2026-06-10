@@ -457,6 +457,58 @@ def _truncate_linkedin_noise(text: str) -> str:
     return text[:earliest].strip()
 
 
+# Messaging-page chrome around an opened conversation thread. innerText on
+# /messaging/thread/ pages carries no URL or attribute signal separating the
+# inbox sidebar from the thread, so the boundaries are matched on visible
+# strings — guarded by an explicit per-locale table (CLAUDE.md → Scraping
+# Rules). BrowserManager forces the context locale to en-US (core/browser.py),
+# so the "en" entry is the operative one; a locale without a table entry
+# passes through unstripped.
+_MESSAGING_CHROME_STRINGS: dict[str, dict[str, str]] = {
+    "en": {
+        # Screen-reader label on the options dropdown; appears once per
+        # sidebar entry and once in the opened thread's header, so the last
+        # occurrence before the composer marks the end of the page chrome.
+        "thread_header_prefix": "Open the options list in your conversation with",
+        # First control of the trailing message-composer block.
+        "composer_start": "Maximize compose field",
+    },
+}
+
+
+def strip_conversation_chrome(text: str, locale: str = "en") -> str:
+    """Trim messaging chrome around an opened conversation thread.
+
+    A conversation page's innerText embeds the thread between three chrome
+    blocks: the messaging header, the inbox sidebar (which previews *other*
+    conversations), and the trailing message composer. Drops everything
+    through the last thread-header line and everything from the last
+    composer line onward. Each boundary independently falls back to keeping
+    the text when its marker is absent (unknown locale, layout change).
+    """
+    table = _MESSAGING_CHROME_STRINGS.get(locale)
+    if table is None:
+        return text
+
+    lines = text.splitlines()
+
+    # Last exact composer line wins so a message that merely quotes the
+    # string can't truncate the thread early.
+    end = len(lines)
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].strip() == table["composer_start"]:
+            end = i
+            break
+
+    start = 0
+    for i in range(end - 1, -1, -1):
+        if lines[i].strip().startswith(table["thread_header_prefix"]):
+            start = i + 1
+            break
+
+    return "\n".join(lines[start:end]).strip()
+
+
 class LinkedInExtractor:
     """Extracts LinkedIn page content via navigate-scroll-innerText pattern."""
 
@@ -3144,6 +3196,7 @@ class LinkedInExtractor:
         raw_result = await self._extract_root_content(["main"])
         raw = raw_result["text"]
         cleaned = strip_linkedin_noise(raw) if raw else ""
+        cleaned = strip_conversation_chrome(cleaned) if cleaned else ""
         references = (
             build_references(raw_result["references"], "conversation")
             if cleaned

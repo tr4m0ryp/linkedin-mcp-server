@@ -19,6 +19,7 @@ from linkedin_mcp_server.scraping.extractor import (
     _RATE_LIMITED_MSG,
     _build_feed_references,
     _truncate_linkedin_noise,
+    strip_conversation_chrome,
     strip_linkedin_noise,
 )
 from linkedin_mcp_server.scraping.link_metadata import Reference
@@ -2457,6 +2458,79 @@ class TestStripLinkedInNoise:
         assert strip_linkedin_noise(text) == "Feed post number 1\nActual post content"
 
 
+class TestStripConversationChrome:
+    THREAD = (
+        "MAY 25\n"
+        "Grace Hopper sent the following message at 5:27 PM\n"
+        "Grace Hopper  5:27 PM\n"
+        "\n"
+        "Hello!"
+    )
+    PAGE = (
+        "Messaging\n"
+        "Search messages\n"
+        "Compose a new message\n"
+        "Inbox\n"
+        "Attention screen reader users, messaging items continuously update.\n"
+        "Ada Lovelace\n"
+        "Jun 8\n"
+        "Ada: Preview belonging to a different conversation\n"
+        ". Press return to go to conversation details\n"
+        "Open the options list in your conversation with Ada Lovelace and Grace Hopper\n"
+        "Status is reachable\n"
+        "Load more conversations\n"
+        "Grace Hopper\n"
+        "Status is online\n"
+        "Open the options list in your conversation with Grace Hopper and Ada Lovelace\n"
+        + THREAD
+        + "\n"
+        "Maximize compose field\n"
+        "Attach an image to your conversation with Grace Hopper\n"
+        "Open GIF Keyboard\n"
+        "Send"
+    )
+
+    def test_strips_sidebar_and_composer(self):
+        assert strip_conversation_chrome(self.PAGE) == self.THREAD
+
+    def test_other_conversation_previews_removed(self):
+        assert "different conversation" not in strip_conversation_chrome(self.PAGE)
+        assert "Ada Lovelace" not in strip_conversation_chrome(self.PAGE)
+
+    def test_missing_composer_strips_only_leading_chrome(self):
+        text = (
+            "Open the options list in your conversation with Grace Hopper and Ada Lovelace\n"
+            + self.THREAD
+        )
+        assert strip_conversation_chrome(text) == self.THREAD
+
+    def test_missing_thread_header_strips_only_composer(self):
+        text = self.THREAD + "\nMaximize compose field\nSend"
+        assert strip_conversation_chrome(text) == self.THREAD
+
+    def test_quoted_composer_string_in_message_survives(self):
+        text = (
+            "Open the options list in your conversation with Grace Hopper and Ada Lovelace\n"
+            "Maximize compose field\n"
+            "is the label I keep seeing\n"
+            "Maximize compose field\n"
+            "Send"
+        )
+        assert (
+            strip_conversation_chrome(text)
+            == "Maximize compose field\nis the label I keep seeing"
+        )
+
+    def test_unknown_locale_returns_unchanged(self):
+        assert strip_conversation_chrome(self.PAGE, locale="de") == self.PAGE
+
+    def test_no_markers_returns_stripped_text(self):
+        assert strip_conversation_chrome("Hello!\nHi there!") == "Hello!\nHi there!"
+
+    def test_empty_string(self):
+        assert strip_conversation_chrome("") == ""
+
+
 class TestActivityFeedExtraction:
     """Tests for activity page detection and wait behavior in _extract_page_once."""
 
@@ -3700,6 +3774,45 @@ class TestGetConversation:
             "https://www.linkedin.com/messaging/thread/abc123/"
         )
         assert result["sections"]["conversation"] == "Hello!\nHi there!"
+
+    async def test_strips_conversation_page_chrome(self, mock_page):
+        """get_conversation trims sidebar and composer chrome from the thread."""
+        raw = (
+            "Ada: Preview belonging to a different conversation\n"
+            "Open the options list in your conversation with Ada and Grace\n"
+            "Hello!\n"
+            "Maximize compose field\n"
+            "Send"
+        )
+        extractor = LinkedInExtractor(mock_page)
+        with (
+            patch.object(extractor, "_navigate_to_page", new_callable=AsyncMock),
+            patch(
+                "linkedin_mcp_server.scraping.extractor.detect_rate_limit",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "linkedin_mcp_server.scraping.extractor.handle_modal_close",
+                new_callable=AsyncMock,
+            ),
+            patch.object(extractor, "_wait_for_main_text", new_callable=AsyncMock),
+            patch.object(
+                extractor, "_scroll_main_scrollable_region", new_callable=AsyncMock
+            ),
+            patch.object(
+                extractor,
+                "_extract_root_content",
+                new_callable=AsyncMock,
+                return_value={"text": raw, "references": []},
+            ),
+            patch(
+                "linkedin_mcp_server.scraping.extractor.build_references",
+                return_value=[],
+            ),
+        ):
+            result = await extractor.get_conversation(thread_id="abc123")
+
+        assert result["sections"]["conversation"] == "Hello!"
 
     async def test_raises_when_no_identifier(self, mock_page):
         """get_conversation raises LinkedInScraperException with no args."""
