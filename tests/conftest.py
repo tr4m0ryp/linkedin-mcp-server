@@ -7,11 +7,14 @@ def reset_singletons():
     from linkedin_mcp_server.bootstrap import reset_bootstrap_for_testing
     from linkedin_mcp_server.config import reset_config
     from linkedin_mcp_server.drivers.browser import reset_browser_for_testing
+    from linkedin_mcp_server.session_state import has_local_gui_session
 
+    has_local_gui_session.cache_clear()
     reset_bootstrap_for_testing()
     reset_browser_for_testing()
     reset_config()
     yield
+    has_local_gui_session.cache_clear()
     reset_bootstrap_for_testing()
     reset_browser_for_testing()
     reset_config()

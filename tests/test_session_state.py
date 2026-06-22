@@ -1,5 +1,8 @@
+import subprocess
+
 from linkedin_mcp_server.session_state import (
     get_runtime_id,
+    has_local_gui_session,
     load_runtime_state,
     load_source_state,
     runtime_profile_dir,
@@ -9,6 +12,62 @@ from linkedin_mcp_server.session_state import (
     write_runtime_state,
     write_source_state,
 )
+
+
+def _completed(returncode: int, stdout: str) -> subprocess.CompletedProcess:
+    return subprocess.CompletedProcess(
+        args=["launchctl", "managername"], returncode=returncode, stdout=stdout
+    )
+
+
+def test_has_local_gui_session_aqua_true(monkeypatch):
+    monkeypatch.setattr("linkedin_mcp_server.session_state.sys.platform", "darwin")
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: _completed(0, "Aqua\n"))
+    assert has_local_gui_session() is True
+
+
+def test_has_local_gui_session_background_false(monkeypatch):
+    monkeypatch.setattr("linkedin_mcp_server.session_state.sys.platform", "darwin")
+    monkeypatch.setattr(
+        subprocess, "run", lambda *a, **k: _completed(0, "Background\n")
+    )
+    assert has_local_gui_session() is False
+
+
+def test_has_local_gui_session_nonzero_returncode_false(monkeypatch):
+    monkeypatch.setattr("linkedin_mcp_server.session_state.sys.platform", "darwin")
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: _completed(1, "Aqua\n"))
+    assert has_local_gui_session() is False
+
+
+def test_has_local_gui_session_non_darwin_skips_subprocess(monkeypatch):
+    monkeypatch.setattr("linkedin_mcp_server.session_state.sys.platform", "linux")
+
+    def fail(*args, **kwargs):
+        raise AssertionError("subprocess must not run off macOS")
+
+    monkeypatch.setattr(subprocess, "run", fail)
+    assert has_local_gui_session() is False
+
+
+def test_has_local_gui_session_timeout_false(monkeypatch):
+    monkeypatch.setattr("linkedin_mcp_server.session_state.sys.platform", "darwin")
+
+    def raise_timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=["launchctl"], timeout=2.0)
+
+    monkeypatch.setattr(subprocess, "run", raise_timeout)
+    assert has_local_gui_session() is False
+
+
+def test_has_local_gui_session_oserror_false(monkeypatch):
+    monkeypatch.setattr("linkedin_mcp_server.session_state.sys.platform", "darwin")
+
+    def raise_oserror(*args, **kwargs):
+        raise OSError("no launchctl")
+
+    monkeypatch.setattr(subprocess, "run", raise_oserror)
+    assert has_local_gui_session() is False
 
 
 def test_write_source_state_creates_generation(monkeypatch, isolate_profile_dir):

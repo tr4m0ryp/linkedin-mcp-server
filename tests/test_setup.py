@@ -203,6 +203,54 @@ async def test_interactive_login_passes_user_agent_to_browser_manager(
 
 
 @pytest.mark.asyncio
+async def test_interactive_login_threads_login_timeout(monkeypatch, tmp_path):
+    """config.browser.login_timeout_seconds is converted to ms and passed through."""
+    browser = _make_browser(export_cookies=True)
+    config = AppConfig()
+    config.browser.login_timeout_seconds = 600
+
+    _patch_login_deps(
+        monkeypatch,
+        browser_factory=lambda **kwargs: _BrowserContextManager(browser),
+        config=config,
+    )
+    wait_mock = AsyncMock()
+    monkeypatch.setattr("linkedin_mcp_server.setup.wait_for_manual_login", wait_mock)
+
+    await interactive_login(tmp_path / "profile")
+
+    wait_mock.assert_awaited_once()
+    await_args = wait_mock.await_args
+    assert await_args is not None
+    assert await_args.kwargs["timeout"] == 600000
+
+
+@pytest.mark.asyncio
+async def test_interactive_login_threads_login_timeout_zero_unlimited(
+    monkeypatch, tmp_path
+):
+    """login_timeout_seconds == 0 passes timeout=0 (unlimited) through."""
+    browser = _make_browser(export_cookies=True)
+    config = AppConfig()
+    config.browser.login_timeout_seconds = 0
+
+    _patch_login_deps(
+        monkeypatch,
+        browser_factory=lambda **kwargs: _BrowserContextManager(browser),
+        config=config,
+    )
+    wait_mock = AsyncMock()
+    monkeypatch.setattr("linkedin_mcp_server.setup.wait_for_manual_login", wait_mock)
+
+    await interactive_login(tmp_path / "profile")
+
+    wait_mock.assert_awaited_once()
+    await_args = wait_mock.await_args
+    assert await_args is not None
+    assert await_args.kwargs["timeout"] == 0
+
+
+@pytest.mark.asyncio
 async def test_interactive_login_passes_viewport_to_browser_manager(
     monkeypatch, tmp_path
 ):
