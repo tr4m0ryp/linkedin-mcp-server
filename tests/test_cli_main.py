@@ -219,16 +219,23 @@ def test_profile_info_reports_bridge_required_for_foreign_runtime(
     )
 
     monkeypatch.setattr(
-        "linkedin_mcp_server.cli_main.get_profile_dir", lambda: profile_dir
+        "linkedin_mcp_server.cli_main.session_commands.get_profile_dir",
+        lambda: profile_dir,
     )
     monkeypatch.setattr(
-        "linkedin_mcp_server.cli_main.get_runtime_id", lambda: "linux-amd64-container"
+        "linkedin_mcp_server.cli_main.session_commands.get_runtime_id",
+        lambda: "linux-amd64-container",
     )
-    monkeypatch.setattr("linkedin_mcp_server.cli_main.get_config", lambda: AppConfig())
     monkeypatch.setattr(
-        "linkedin_mcp_server.cli_main.configure_logging", lambda **_kwargs: None
+        "linkedin_mcp_server.cli_main.session_commands.get_config", lambda: AppConfig()
     )
-    monkeypatch.setattr("linkedin_mcp_server.cli_main.get_version", lambda: "4.0.0")
+    monkeypatch.setattr(
+        "linkedin_mcp_server.cli_main.session_commands.configure_logging",
+        lambda **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        "linkedin_mcp_server.cli_main.session_commands.get_version", lambda: "4.0.0"
+    )
 
     with pytest.raises(SystemExit) as exit_info:
         cli_main.profile_info_and_exit()
@@ -294,22 +301,31 @@ def test_profile_info_reports_committed_derived_runtime(
     browser.is_authenticated = True
 
     monkeypatch.setattr(
-        "linkedin_mcp_server.cli_main.get_profile_dir", lambda: profile_dir
+        "linkedin_mcp_server.cli_main.session_commands.get_profile_dir",
+        lambda: profile_dir,
     )
     monkeypatch.setattr(
-        "linkedin_mcp_server.cli_main.get_runtime_id", lambda: "linux-amd64-container"
+        "linkedin_mcp_server.cli_main.session_commands.get_runtime_id",
+        lambda: "linux-amd64-container",
     )
     monkeypatch.setenv("LINKEDIN_EXPERIMENTAL_PERSIST_DERIVED_SESSION", "1")
-    monkeypatch.setattr("linkedin_mcp_server.cli_main.get_config", lambda: AppConfig())
     monkeypatch.setattr(
-        "linkedin_mcp_server.cli_main.configure_logging", lambda **_kwargs: None
+        "linkedin_mcp_server.cli_main.session_commands.get_config", lambda: AppConfig()
     )
-    monkeypatch.setattr("linkedin_mcp_server.cli_main.get_version", lambda: "4.0.0")
     monkeypatch.setattr(
-        "linkedin_mcp_server.cli_main.get_or_create_browser",
+        "linkedin_mcp_server.cli_main.session_commands.configure_logging",
+        lambda **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        "linkedin_mcp_server.cli_main.session_commands.get_version", lambda: "4.0.0"
+    )
+    monkeypatch.setattr(
+        "linkedin_mcp_server.cli_main.session_commands.get_or_create_browser",
         AsyncMock(return_value=browser),
     )
-    monkeypatch.setattr("linkedin_mcp_server.cli_main.close_browser", AsyncMock())
+    monkeypatch.setattr(
+        "linkedin_mcp_server.cli_main.session_commands.close_browser", AsyncMock()
+    )
 
     with pytest.raises(SystemExit) as exit_info:
         cli_main.profile_info_and_exit()
