@@ -1,18 +1,12 @@
 """Browser lifecycle management using Patchright with persistent context."""
 
-import asyncio
 import json
 import logging
 import os
 from pathlib import Path
 from typing import Any
 
-from patchright.async_api import (
-    BrowserContext,
-    Page,
-    Playwright,
-    async_playwright,
-)
+from patchright.async_api import BrowserContext, Page, Playwright, async_playwright
 
 from linkedin_mcp_server.common_utils import (
     harden_linkedin_tree,
@@ -20,13 +14,20 @@ from linkedin_mcp_server.common_utils import (
     secure_write_text,
 )
 
-from .exceptions import NetworkError
+from ..exceptions import NetworkError
+from ._helpers import (
+    _DEFAULT_USER_DATA_DIR,
+    _PRIVATE_FILE_MODE,
+    BRIDGE_COOKIE_PRESETS,
+    build_context_options,
+    close_context,
+    normalize_cookie_domain,
+    resolve_bridge_cookie_names,
+    stop_playwright,
+)
 
-logger = logging.getLogger(__name__)
-
-_DEFAULT_USER_DATA_DIR = Path.home() / ".linkedin-mcp" / "profile"
-_PRIVATE_FILE_MODE = 0o600
-_CLEANUP_TIMEOUT_SECONDS = 10
+# Keep the pre-split logger name so existing logging config stays effective.
+logger = logging.getLogger("linkedin_mcp_server.core.browser")
 
 
 class BrowserManager:
@@ -77,16 +78,13 @@ class BrowserManager:
             secure_mkdir(Path(self.user_data_dir))
             harden_linkedin_tree(Path(self.user_data_dir))
 
-            context_options: dict[str, Any] = {
-                "headless": self.headless,
-                "slow_mo": self.slow_mo,
-                "viewport": self.viewport,
-                **self.launch_options,
-                "locale": "en-US",
-            }
-
-            if self.user_agent:
-                context_options["user_agent"] = self.user_agent
+            context_options = build_context_options(
+                headless=self.headless,
+                slow_mo=self.slow_mo,
+                viewport=self.viewport,
+                user_agent=self.user_agent,
+                launch_options=self.launch_options,
+            )
 
             self._context = await self._playwright.chromium.launch_persistent_context(
                 self.user_data_dir,
@@ -121,36 +119,13 @@ class BrowserManager:
         if context is None and playwright is None:
             return
 
-        # Bound each cleanup step. A wedged Chromium (stale SingletonLock,
-        # sandbox stall, X-less host) can hang context.close() / playwright.stop()
-        # indefinitely; without these timeouts a caller that cancels close()
-        # (e.g. asyncio.wait_for on the auto-import) would block past its own
-        # budget while awaiting the hung cleanup.
+        # Timeout-bounded cleanup lives in _helpers; see the comment there on
+        # why each step must be bounded (wedged Chromium can hang forever).
         if context is not None:
-            try:
-                await asyncio.wait_for(
-                    context.close(), timeout=_CLEANUP_TIMEOUT_SECONDS
-                )
-            except TimeoutError:
-                logger.error(
-                    "Timed out closing browser context after %ss",
-                    _CLEANUP_TIMEOUT_SECONDS,
-                )
-            except Exception as exc:
-                logger.error("Error closing browser context: %s", exc)
+            await close_context(context)
 
         if playwright is not None:
-            try:
-                await asyncio.wait_for(
-                    playwright.stop(), timeout=_CLEANUP_TIMEOUT_SECONDS
-                )
-            except TimeoutError:
-                logger.error(
-                    "Timed out stopping playwright after %ss",
-                    _CLEANUP_TIMEOUT_SECONDS,
-                )
-            except Exception as exc:
-                logger.error("Error stopping playwright: %s", exc)
+            await stop_playwright(playwright)
 
         logger.info("Browser closed")
 
@@ -192,15 +167,8 @@ class BrowserManager:
 
     @staticmethod
     def _normalize_cookie_domain(cookie: Any) -> dict[str, Any]:
-        """Normalize cookie domain for cross-platform compatibility.
-
-        Playwright reports some LinkedIn cookies with ``.www.linkedin.com``
-        domain, but Chromium's internal store uses ``.linkedin.com``.
-        """
-        domain = cookie.get("domain", "")
-        if domain in (".www.linkedin.com", "www.linkedin.com"):
-            cookie = {**cookie, "domain": ".linkedin.com"}
-        return cookie
+        """Normalize cookie domain; see :func:`_helpers.normalize_cookie_domain`."""
+        return normalize_cookie_domain(cookie)
 
     async def export_cookies(self, cookie_path: str | Path | None = None) -> bool:
         """Export LinkedIn cookies to a portable JSON file."""
@@ -256,54 +224,14 @@ class BrowserManager:
             logger.exception("Failed to export storage state to %s", storage_path)
             return False
 
-    _BRIDGE_COOKIE_PRESETS = {
-        "bridge_core": frozenset(
-            {
-                "li_at",
-                "li_rm",
-                "JSESSIONID",
-                "bcookie",
-                "bscookie",
-                "liap",
-                "lidc",
-                "li_gc",
-                "lang",
-                "timezone",
-                "li_mc",
-            }
-        ),
-        "auth_minimal": frozenset(
-            {
-                "li_at",
-                "JSESSIONID",
-                "bcookie",
-                "bscookie",
-                "lidc",
-            }
-        ),
-    }
+    # Class attribute so subclass overrides still resolve via ``cls`` as before.
+    _BRIDGE_COOKIE_PRESETS = BRIDGE_COOKIE_PRESETS
 
     @classmethod
     def _bridge_cookie_names(
         cls, preset_name: str | None = None
     ) -> tuple[str, frozenset[str]]:
-        preset_name = (
-            preset_name
-            or os.getenv(
-                "LINKEDIN_DEBUG_BRIDGE_COOKIE_SET",
-                "auth_minimal",
-            ).strip()
-            or "auth_minimal"
-        )
-        preset = cls._BRIDGE_COOKIE_PRESETS.get(preset_name)
-        if preset is None:
-            logger.warning(
-                "Unknown LINKEDIN_DEBUG_BRIDGE_COOKIE_SET=%r, falling back to auth_minimal",
-                preset_name,
-            )
-            preset_name = "auth_minimal"
-            preset = cls._BRIDGE_COOKIE_PRESETS[preset_name]
-        return preset_name, preset
+        return resolve_bridge_cookie_names(cls._BRIDGE_COOKIE_PRESETS, preset_name)
 
     async def import_cookies(
         self,
