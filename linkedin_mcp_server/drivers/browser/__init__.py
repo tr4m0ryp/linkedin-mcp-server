@@ -21,13 +21,15 @@ from linkedin_mcp_server.core import (
     AuthenticationError,
     BrowserManager,
 )
+from linkedin_mcp_server.drivers.browser.profiles import (
+    get_profile_dir,
+    profile_exists,
+)
 from linkedin_mcp_server.session_state import (
     get_runtime_id,
-    get_source_profile_dir,
     load_runtime_state,
     load_source_state,
     portable_cookie_path,
-    profile_exists as session_profile_exists,
     runtime_profile_dir,
     runtime_storage_state_path,
 )
