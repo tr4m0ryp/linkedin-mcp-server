@@ -1,0 +1,19 @@
+# Split-tunnel self-heal grant for the LinkedIn MCP service user.
+#
+# Install as /etc/sudoers.d/linkedin-vpn (mode 0440, owner root:root) and
+# validate with `visudo -cf /etc/sudoers.d/linkedin-vpn` before trusting it.
+#
+# Grants user `linkedin` passwordless sudo on EXACTLY the three commands the
+# VPN self-heal MCP tools invoke -- nothing broader. Command matching is by
+# exact path + arguments, so the tools call these verbatim (under `sudo -n`)
+# and any other systemctl/ip invocation is denied.
+#
+#   vpn_reconnect  -> systemctl restart linkedin-vpn
+#   vpn_status     -> systemctl is-active linkedin-vpn
+#                     ip netns exec lkvpn wg show wg0 latest-handshakes
+#
+# Paths match a merged-usr Debian/Ubuntu GCE image; verify on the VM with
+# `command -v systemctl` (/bin/systemctl) and `command -v ip` (/usr/sbin/ip).
+linkedin ALL=(root) NOPASSWD: /bin/systemctl restart linkedin-vpn
+linkedin ALL=(root) NOPASSWD: /bin/systemctl is-active linkedin-vpn
+linkedin ALL=(root) NOPASSWD: /usr/sbin/ip netns exec lkvpn wg show wg0 latest-handshakes
