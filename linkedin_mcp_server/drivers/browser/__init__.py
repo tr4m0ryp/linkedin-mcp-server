@@ -3,8 +3,7 @@
 Async BrowserManager lifecycle with a persistent-context singleton reused across
 tool calls. This module holds singleton state, context building, the create/close
 lifecycle, and profile/headless accessors; ``feed_auth``, ``bridge``, and
-``session_checks`` hold the auth probe, bridging, and session validation,
-re-exported below so ``drivers.browser.<name>`` is unchanged.
+``session_checks`` (re-exported below) hold the auth probe, bridging, and checks.
 """
 
 import asyncio
