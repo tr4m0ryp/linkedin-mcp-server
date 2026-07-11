@@ -18,8 +18,7 @@ from linkedin_mcp_server.bootstrap import (
     initialize_bootstrap,
     start_background_browser_setup_if_needed,
 )
-from linkedin_mcp_server.config import get_config
-from linkedin_mcp_server.config.schema import DEFAULT_TOOL_TIMEOUT_SECONDS
+from linkedin_mcp_server.config.schema import DEFAULT_TOOL_TIMEOUT_SECONDS, ServerConfig
 from linkedin_mcp_server.drivers.browser import close_browser
 from linkedin_mcp_server.error_handler import raise_tool_error
 from linkedin_mcp_server.sequential_tool_middleware import (
