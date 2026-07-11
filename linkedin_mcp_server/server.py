@@ -50,20 +50,28 @@ async def browser_lifespan(app: FastMCP) -> AsyncIterator[dict[str, Any]]:
     await close_browser()
 
 
-def create_mcp_server(*, tool_timeout: float = DEFAULT_TOOL_TIMEOUT_SECONDS) -> FastMCP:
+def create_mcp_server(
+    *,
+    tool_timeout: float = DEFAULT_TOOL_TIMEOUT_SECONDS,
+    server_config: ServerConfig | None = None,
+) -> FastMCP:
     """Create and configure the MCP server with all LinkedIn tools.
 
     Auth is optional and config-driven (see :mod:`linkedin_mcp_server.auth`):
     ``None`` when neither ``MCP_API_KEY`` nor ``WORKOS_AUTHKIT_DOMAIN`` is set
     (the default, unauthenticated for local / tunnelled use), otherwise a
     static-bearer and/or WorkOS AuthKit layer enforced on the ``/mcp`` endpoint.
+
+    ``server_config`` supplies the auth settings; when omitted a default
+    (authless) :class:`ServerConfig` is used, so calling this with no arguments
+    never touches the environment or CLI.
     """
     mcp = FastMCP(
         "mcp-server-linkedin",
         version=__version__,
         lifespan=browser_lifespan,
         mask_error_details=True,
-        auth=build_auth(get_config().server),
+        auth=build_auth(server_config or ServerConfig()),
     )
     mcp.add_middleware(SequentialToolExecutionMiddleware())
     mcp.add_middleware(UpdateNoticeMiddleware())
