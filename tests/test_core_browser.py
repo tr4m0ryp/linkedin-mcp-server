@@ -6,6 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from linkedin_mcp_server.core.browser import BrowserManager
+from linkedin_mcp_server.core.browser._helpers import (
+    build_context_options,
+    build_proxy_options,
+)
 
 
 def _make_cookie(
