@@ -72,7 +72,7 @@ async def _authenticate_existing_profile(
     launch_options: dict[str, str],
     viewport: dict[str, int],
     user_agent: str | None = None,
-) -> "BrowserManager":
+) -> BrowserManager:
     browser = _make_browser(
         profile_dir,
         launch_options=launch_options,
