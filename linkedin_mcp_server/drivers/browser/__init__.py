@@ -3,22 +3,13 @@ Patchright browser management for LinkedIn scraping.
 
 Provides async browser lifecycle management using BrowserManager with persistent
 context. Implements a singleton pattern for browser reuse across tool calls with
-automatic profile persistence.
-
-Split into submodules to stay under the per-file line cap while keeping
-``linkedin_mcp_server.drivers.browser`` a single import surface:
-
-- this module holds the singleton state, context building (``_make_browser``,
-  ``_launch_options``, ``_apply_browser_settings``), the create/close lifecycle,
-  and the profile/headless accessors;
-- ``feed_auth`` holds the ``/feed/`` auth probe;
-- ``bridge`` holds runtime-profile bridging and imported-cookie validation;
-- ``session_checks`` holds the session-validation helpers.
-
-Names that tests patch on this package (``BrowserManager``, ``get_config``,
-``get_runtime_id``) are imported and resolved here so ``patch``-where-used keeps
-working; ``_feed_auth_succeeds`` and the bridge/session helpers are re-exported
-below so the public surface is unchanged.
+automatic profile persistence. Split across submodules to stay under the
+per-file line cap: this module holds the singleton state, context building, the
+create/close lifecycle, and the profile/headless accessors; ``feed_auth`` the
+``/feed/`` auth probe; ``bridge`` runtime-profile bridging and imported-cookie
+validation; ``session_checks`` the session-validation helpers. Names tests patch
+here (``BrowserManager``, ``get_config``, ``get_runtime_id``) resolve in this
+namespace; the submodule helpers are re-exported below unchanged.
 """
 
 import asyncio
