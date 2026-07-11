@@ -16,14 +16,8 @@ import logging
 from pathlib import Path
 
 from linkedin_mcp_server.config import get_config
-from linkedin_mcp_server.core import (
-    AuthenticationError,
-    BrowserManager,
-)
-from linkedin_mcp_server.drivers.browser.profiles import (
-    get_profile_dir,
-    profile_exists,
-)
+from linkedin_mcp_server.core import AuthenticationError, BrowserManager
+from linkedin_mcp_server.drivers.browser.profiles import get_profile_dir, profile_exists
 from linkedin_mcp_server.session_state import (
     get_runtime_id,
     load_runtime_state,
