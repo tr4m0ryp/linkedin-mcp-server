@@ -43,14 +43,6 @@ from .issue_template import (
     _tool_name_for_context,
 )
 
-__all__ = [
-    "ISSUE_SEARCH_API",
-    "ISSUE_TITLE_PREFIX",
-    "ISSUE_URL",
-    "build_issue_diagnostics",
-    "format_tool_error_with_diagnostics",
-]
-
 
 def build_issue_diagnostics(
     exception: Exception,
@@ -229,3 +221,37 @@ def _issue_search_query(payload: dict[str, Any]) -> str:
         section = payload.get("section_name") or "scrape"
         summary = f'"{section}"'
     return f"repo:stickerdaniel/linkedin-mcp-server is:issue is:open {summary}"
+
+
+__all__ = [
+    "ISSUE_SEARCH_API",
+    "ISSUE_TITLE_PREFIX",
+    "ISSUE_URL",
+    "_build_gist_command",
+    "_find_existing_issues",
+    "_inside_running_event_loop",
+    "_installation_method_lines",
+    "_installation_method_summary",
+    "_issue_search_query",
+    "_public_issue_diagnostics",
+    "_render_issue_template",
+    "_safe_source_profile_dir",
+    "_suggest_issue_title",
+    "_tool_name_for_context",
+    "auth_root_dir",
+    "build_issue_diagnostics",
+    "format_tool_error_with_diagnostics",
+    "get_runtime_id",
+    "get_source_profile_dir",
+    "get_trace_dir",
+    "load_runtime_state",
+    "load_source_state",
+    "mark_trace_for_retention",
+    "portable_cookie_path",
+    "runtime_profile_dir",
+    "runtime_storage_state_path",
+    "secure_mkdir",
+    "secure_write_text",
+    "slugify_fragment",
+    "utcnow_iso",
+]
