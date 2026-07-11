@@ -259,6 +259,16 @@ async def close_browser() -> None:
     logger.info("Browser closed")
 
 
+def get_profile_dir() -> Path:
+    """Get the resolved profile directory from config."""
+    return get_source_profile_dir()
+
+
+def profile_exists(profile_dir: Path | None = None) -> bool:
+    """Check if a persistent browser profile exists and is non-empty."""
+    return session_profile_exists(profile_dir or get_profile_dir())
+
+
 def set_headless(headless: bool) -> None:
     """Set headless mode for future browser creation."""
     global _headless
