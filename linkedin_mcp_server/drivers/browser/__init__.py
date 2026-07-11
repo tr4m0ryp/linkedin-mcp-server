@@ -36,9 +36,8 @@ DEFAULT_PROFILE_DIR = Path.home() / ".linkedin-mcp" / "profile"
 _browser: BrowserManager | None = None
 _browser_cookie_export_path: Path | None = None
 _headless: bool = True
-# Serializes singleton creation: tool calls are serialized by the tool-call
-# middleware, but the background login flow started at startup can resume into
-# this path and race the first tool call, and an unguarded check-then-create
+# Serializes singleton creation: the startup background login flow can resume
+# into this path and race the first tool call; an unguarded check-then-create
 # would launch two browsers against the same profile.
 _browser_create_lock = asyncio.Lock()
 
