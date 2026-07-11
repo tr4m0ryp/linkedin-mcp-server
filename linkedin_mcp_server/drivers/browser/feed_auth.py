@@ -10,6 +10,7 @@ dependencies (``detect_auth_barrier_quick``, ``resolve_remember_me_prompt``,
 import logging
 
 from linkedin_mcp_server.core import (
+    BrowserManager,
     detect_auth_barrier_quick,
     resolve_remember_me_prompt,
 )
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 async def _log_feed_failure_context(
-    browser: "BrowserManager",
+    browser: BrowserManager,
     reason: str,
     exc: Exception | None = None,
 ) -> None:
@@ -57,7 +58,7 @@ async def _log_feed_failure_context(
 
 
 async def _feed_auth_succeeds(
-    browser: "BrowserManager",
+    browser: BrowserManager,
     *,
     allow_remember_me: bool = True,
 ) -> bool:
