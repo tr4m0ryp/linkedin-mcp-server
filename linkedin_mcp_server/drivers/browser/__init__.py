@@ -286,11 +286,9 @@ def reset_browser_for_testing() -> None:
     _headless = True
 
 
-# Re-exported at the end (bridge imports _make_browser/_launch_options from here,
-# defined above) so drivers.browser.<name> resolves unchanged for patch-where-used.
-from linkedin_mcp_server.drivers.browser.feed_auth import (  # noqa: E402
-    _feed_auth_succeeds,
-)
+# Re-exported at the end (bridge imports _make_browser/_launch_options from above)
+# so drivers.browser.<name> resolves unchanged for patch-where-used tests.
+from linkedin_mcp_server.drivers.browser.feed_auth import _feed_auth_succeeds  # noqa: E402
 from linkedin_mcp_server.drivers.browser.bridge import (  # noqa: E402
     _authenticate_existing_profile,
     _bridge_runtime_profile,
