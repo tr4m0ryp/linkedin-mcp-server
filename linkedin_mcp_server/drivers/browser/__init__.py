@@ -2,11 +2,10 @@
 
 Async BrowserManager lifecycle with a persistent-context singleton reused across
 tool calls. Split across submodules to stay under the per-file line cap: this
-module holds the singleton state, context building, the create/close lifecycle,
-and the profile/headless accessors; ``feed_auth``, ``bridge``, and
-``session_checks`` hold the auth probe, runtime-profile bridging, and session
-validation. Names tests patch here resolve in this namespace; submodule helpers
-are re-exported below unchanged.
+module holds singleton state, context building, the create/close lifecycle, and
+profile/headless accessors; ``feed_auth``, ``bridge``, and ``session_checks``
+hold the auth probe, runtime-profile bridging, and session validation. Names
+tests patch here resolve in this namespace; submodule helpers re-exported below.
 """
 
 import asyncio
