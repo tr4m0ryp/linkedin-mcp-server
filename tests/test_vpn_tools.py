@@ -5,8 +5,6 @@ subprocess output mocked (so nothing here needs a real VPN), and the
 ``LINKEDIN_VPN_ENABLED`` registration gate.
 """
 
-from typing import Any
-
 from linkedin_mcp_server.tools.vpn import config as vpn_config
 from linkedin_mcp_server.tools.vpn import probe as vpn_probe
 from linkedin_mcp_server.tools.vpn.config import VpnSettings, vpn_enabled
