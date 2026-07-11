@@ -137,7 +137,7 @@ async def test_same_runtime_uses_source_profile(tmp_path):
             return_value=source_browser,
         ) as ctor,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -165,12 +165,12 @@ async def test_same_runtime_clicks_remember_me_during_feed_validation(tmp_path):
             return_value=source_browser,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.resolve_remember_me_prompt",
+            "linkedin_mcp_server.drivers.browser.feed_auth.resolve_remember_me_prompt",
             new_callable=AsyncMock,
             return_value=True,
         ) as remember_me,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -191,12 +191,12 @@ async def test_feed_auth_retries_feed_after_remember_me_error_recovery():
 
     with (
         patch(
-            "linkedin_mcp_server.drivers.browser.resolve_remember_me_prompt",
+            "linkedin_mcp_server.drivers.browser.feed_auth.resolve_remember_me_prompt",
             new_callable=AsyncMock,
             return_value=True,
         ) as remember_me,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -216,17 +216,17 @@ async def test_feed_auth_records_single_post_recovery_trace():
 
     with (
         patch(
-            "linkedin_mcp_server.drivers.browser.resolve_remember_me_prompt",
+            "linkedin_mcp_server.drivers.browser.feed_auth.resolve_remember_me_prompt",
             new_callable=AsyncMock,
             return_value=True,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.record_page_trace",
+            "linkedin_mcp_server.drivers.browser.feed_auth.record_page_trace",
             new_callable=AsyncMock,
         ) as record_page_trace,
     ):
@@ -256,7 +256,7 @@ async def test_experimental_derived_runtime_reuses_matching_committed_profile(
             return_value=derived_browser,
         ) as ctor,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -292,7 +292,7 @@ async def test_default_foreign_runtime_bridges_fresh_each_startup(tmp_path):
             return_value=first_browser,
         ) as ctor,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -337,7 +337,7 @@ async def test_experimental_missing_derived_runtime_bridges_and_checkpoint_commi
             side_effect=[first_browser, reopened_browser],
         ) as ctor,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -391,7 +391,7 @@ async def test_debug_skip_checkpoint_restart_keeps_fresh_bridged_browser(
             return_value=first_browser,
         ) as ctor,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -438,7 +438,7 @@ async def test_debug_bridge_every_startup_skips_matching_committed_profile(
             return_value=first_browser,
         ) as ctor,
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -478,7 +478,7 @@ async def test_debug_bridge_cookie_set_flows_through_foreign_runtime_bridge(
             return_value=first_browser,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -519,7 +519,7 @@ async def test_experimental_stale_derived_runtime_rebuilds_from_new_generation(
             side_effect=[first_browser, reopened_browser],
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -555,7 +555,7 @@ async def test_experimental_matching_derived_runtime_failure_rebridges_from_sour
             side_effect=[invalid_browser, bridged_browser],
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             side_effect=["login title: linkedin login", None],
         ),
@@ -645,7 +645,7 @@ async def test_experimental_checkpoint_reopen_failure_clears_runtime_dir(
             side_effect=[first_browser, reopened_browser],
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             barrier_mock,
         ),
         pytest.raises(AuthenticationError),
@@ -684,7 +684,7 @@ async def test_experimental_reopen_start_failure_closes_reopened_browser(
             side_effect=[first_browser, reopened_browser],
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             new_callable=AsyncMock,
             return_value=None,
         ),
@@ -725,7 +725,7 @@ async def test_experimental_bridge_validation_failure_before_commit_clears_runti
             return_value=first_browser,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser.detect_auth_barrier_quick",
+            "linkedin_mcp_server.drivers.browser.feed_auth.detect_auth_barrier_quick",
             barrier_mock,
         ),
         pytest.raises(AuthenticationError),
@@ -753,7 +753,7 @@ async def test_validate_imported_cookies_returns_feed_result(tmp_path, monkeypat
             return_value=browser,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser._feed_auth_succeeds",
+            "linkedin_mcp_server.drivers.browser.bridge._feed_auth_succeeds",
             new_callable=AsyncMock,
             return_value=True,
         ) as feed_ok,
@@ -785,7 +785,7 @@ async def test_validate_imported_cookies_returns_false_when_feed_auth_fails(
             return_value=browser,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser._feed_auth_succeeds",
+            "linkedin_mcp_server.drivers.browser.bridge._feed_auth_succeeds",
             new_callable=AsyncMock,
             return_value=False,
         ) as feed_ok,
@@ -812,7 +812,7 @@ async def test_validate_imported_cookies_short_circuits_on_import_failure(
             return_value=browser,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser._feed_auth_succeeds",
+            "linkedin_mcp_server.drivers.browser.bridge._feed_auth_succeeds",
             new_callable=AsyncMock,
             return_value=True,
         ) as feed_ok,
@@ -857,7 +857,7 @@ async def test_validate_uses_local_manager_not_singleton(tmp_path):
             return_value=browser,
         ),
         patch(
-            "linkedin_mcp_server.drivers.browser._feed_auth_succeeds",
+            "linkedin_mcp_server.drivers.browser.bridge._feed_auth_succeeds",
             new_callable=AsyncMock,
             return_value=True,
         ),
