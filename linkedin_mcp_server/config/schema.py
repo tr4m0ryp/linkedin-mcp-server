@@ -133,6 +133,19 @@ class ServerConfig:
     path: str = "/mcp"
     tool_timeout_seconds: float = DEFAULT_TOOL_TIMEOUT_SECONDS
 
+    # --- Auth for the streamable-http transport (see linkedin_mcp_server.auth) ---
+    # Optional and config-driven: with both unset the /mcp endpoint stays
+    # unauthenticated (today's behaviour); setting either turns on enforcement.
+    # Static bearer accepted as ``Authorization: Bearer $MCP_API_KEY`` (Claude
+    # Code / curl). Works alongside AuthKit -- either credential is accepted.
+    mcp_api_key: str = ""
+    # WorkOS AuthKit tenant domain (https://<tenant>.authkit.app) enabling the
+    # stateless OAuth resource-server path for the claude.ai web connector.
+    workos_authkit_domain: str = ""
+    # Public https base URL of THIS server, WITHOUT the /mcp suffix -- what the
+    # OAuth metadata advertises. Required when workos_authkit_domain is set.
+    mcp_base_url: str = ""
+
     def validate(self) -> None:
         """Validate server configuration values."""
         if not (
@@ -179,13 +192,26 @@ class AppConfig:
         if not self.server.port:
             raise ConfigurationError("HTTP transport requires a valid port")
         if self.server.host in ("0.0.0.0", "::"):
-            logger.warning(
-                "HTTP transport is binding to %s which exposes the server to "
-                "all network interfaces. The MCP endpoint has no authentication "
-                "— anyone on your network can use your LinkedIn session. "
-                "Use 127.0.0.1 (default) unless you understand the risk.",
-                self.server.host,
+            auth_configured = bool(
+                self.server.mcp_api_key or self.server.workos_authkit_domain
             )
+            if auth_configured:
+                logger.warning(
+                    "HTTP transport is binding to %s which exposes the server "
+                    "to all network interfaces. The MCP endpoint is protected "
+                    "by MCP_API_KEY / WorkOS AuthKit, but make sure TLS "
+                    "terminates in front of it.",
+                    self.server.host,
+                )
+            else:
+                logger.warning(
+                    "HTTP transport is binding to %s which exposes the server to "
+                    "all network interfaces. The MCP endpoint has no authentication "
+                    "— anyone on your network can use your LinkedIn session. "
+                    "Use 127.0.0.1 (default), or set MCP_API_KEY / "
+                    "WORKOS_AUTHKIT_DOMAIN, unless you understand the risk.",
+                    self.server.host,
+                )
 
     def _validate_port_range(self) -> None:
         """Validate port is in valid range."""

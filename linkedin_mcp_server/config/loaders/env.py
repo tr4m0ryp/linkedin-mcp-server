@@ -36,6 +36,10 @@ class EnvironmentKeys:
     IMPORT_FROM_BROWSER = "IMPORT_FROM_BROWSER"
     AUTO_IMPORT_FROM_BROWSER = "AUTO_IMPORT_FROM_BROWSER"
     EAGER_FULL_CHROMIUM = "EAGER_FULL_CHROMIUM"
+    # Auth for the streamable-http transport (see linkedin_mcp_server.auth).
+    MCP_API_KEY = "MCP_API_KEY"
+    WORKOS_AUTHKIT_DOMAIN = "WORKOS_AUTHKIT_DOMAIN"
+    MCP_BASE_URL = "MCP_BASE_URL"
 
 
 def load_from_env(config: AppConfig) -> AppConfig:
@@ -147,6 +151,19 @@ def load_from_env(config: AppConfig) -> AppConfig:
     # HTTP server path
     if path_env := os.environ.get(EnvironmentKeys.HTTP_PATH):
         config.server.path = path_env
+
+    # Static bearer token accepted on /mcp (Claude Code / curl). Optional.
+    if api_key_env := os.environ.get(EnvironmentKeys.MCP_API_KEY):
+        config.server.mcp_api_key = api_key_env.strip()
+
+    # WorkOS AuthKit tenant domain enabling OAuth for the claude.ai web
+    # connector. Optional; trailing slash stripped so metadata URLs are clean.
+    if authkit_env := os.environ.get(EnvironmentKeys.WORKOS_AUTHKIT_DOMAIN):
+        config.server.workos_authkit_domain = authkit_env.strip().rstrip("/")
+
+    # Public https base URL of this server (no /mcp); required with AuthKit.
+    if base_url_env := os.environ.get(EnvironmentKeys.MCP_BASE_URL):
+        config.server.mcp_base_url = base_url_env.strip().rstrip("/")
 
     # Slow motion delay for debugging (validated in BrowserConfig.validate())
     if slow_mo_env := os.environ.get(EnvironmentKeys.SLOW_MO):

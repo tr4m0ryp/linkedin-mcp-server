@@ -49,6 +49,27 @@ BRIDGE_COOKIE_PRESETS: dict[str, frozenset[str]] = {
 }
 
 
+def build_proxy_options() -> dict[str, Any] | None:
+    """Build Patchright/Playwright ``proxy=`` options from the environment.
+
+    Returns ``None`` (browser connects directly) unless ``LINKEDIN_PROXY_SERVER``
+    is set, e.g. ``http://host:port`` or ``socks5://host:port``. Optional
+    ``LINKEDIN_PROXY_USERNAME`` / ``LINKEDIN_PROXY_PASSWORD`` add authentication.
+    """
+    server = os.getenv("LINKEDIN_PROXY_SERVER", "").strip()
+    if not server:
+        return None
+
+    proxy: dict[str, Any] = {"server": server}
+    username = os.getenv("LINKEDIN_PROXY_USERNAME", "").strip()
+    password = os.getenv("LINKEDIN_PROXY_PASSWORD", "")
+    if username:
+        proxy["username"] = username
+    if password:
+        proxy["password"] = password
+    return proxy
+
+
 def build_context_options(
     *,
     headless: bool,
@@ -60,7 +81,9 @@ def build_context_options(
     """Build keyword options for ``launch_persistent_context``.
 
     ``launch_options`` may override everything except ``locale``;
-    ``user_agent`` (when set) is applied last and wins.
+    ``user_agent`` (when set) is applied last and wins. An HTTP/SOCKS proxy is
+    added from ``LINKEDIN_PROXY_SERVER`` (see :func:`build_proxy_options`) unless
+    ``launch_options`` already carries an explicit ``proxy``.
     """
     context_options: dict[str, Any] = {
         "headless": headless,
@@ -72,6 +95,12 @@ def build_context_options(
 
     if user_agent:
         context_options["user_agent"] = user_agent
+
+    if "proxy" not in context_options:
+        proxy = build_proxy_options()
+        if proxy is not None:
+            context_options["proxy"] = proxy
+            logger.info("Routing browser through proxy %s", proxy["server"])
 
     return context_options
 
