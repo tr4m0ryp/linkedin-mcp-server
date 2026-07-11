@@ -1,0 +1,16 @@
+[Unit]
+Description=LinkedIn MCP split-tunnel eduVPN (netns lkvpn + wg0 + tinyproxy)
+Documentation=https://github.com/stickerdaniel/linkedin-mcp-server/blob/main/deploy/vpn/README.md
+After=network-online.target
+Wants=network-online.target
+# The MCP unit Requires/After this (see linkedin-mcp.service.d/vpn.conf), so the
+# tunnel and its proxy are up before Chromium is told to use them.
+Before=linkedin-mcp.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/linkedin-vpn-up.sh
+
+[Install]
+WantedBy=multi-user.target

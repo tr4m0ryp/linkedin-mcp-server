@@ -30,6 +30,7 @@ from linkedin_mcp_server.tools.feed import register_feed_tools
 from linkedin_mcp_server.tools.job import register_job_tools
 from linkedin_mcp_server.tools.messaging import register_messaging_tools
 from linkedin_mcp_server.tools.person import register_person_tools
+from linkedin_mcp_server.tools.vpn import register_vpn_tools, vpn_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,12 @@ def create_mcp_server(
     register_job_tools(mcp, tool_timeout=tool_timeout)
     register_messaging_tools(mcp, tool_timeout=tool_timeout)
     register_feed_tools(mcp, tool_timeout=tool_timeout)
+
+    # Optional VM-only VPN self-heal tools. Gated behind LINKEDIN_VPN_ENABLED
+    # because they run privileged host commands (systemctl / ip netns / wg) and
+    # must never exist in the default local build.
+    if vpn_enabled():
+        register_vpn_tools(mcp, tool_timeout=tool_timeout)
 
     # Register session management tool
     @mcp.tool(
