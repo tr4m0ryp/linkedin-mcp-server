@@ -84,6 +84,12 @@ def create_mcp_server(
     register_messaging_tools(mcp, tool_timeout=tool_timeout)
     register_feed_tools(mcp, tool_timeout=tool_timeout)
 
+    # Optional VM-only VPN self-heal tools. Gated behind LINKEDIN_VPN_ENABLED
+    # because they run privileged host commands (systemctl / ip netns / wg) and
+    # must never exist in the default local build.
+    if vpn_enabled():
+        register_vpn_tools(mcp, tool_timeout=tool_timeout)
+
     # Register session management tool
     @mcp.tool(
         timeout=tool_timeout,
