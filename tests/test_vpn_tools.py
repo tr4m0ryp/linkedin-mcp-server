@@ -208,6 +208,7 @@ class TestRegistrationGate:
         mcp = FastMCP("test")
         register_vpn_tools(mcp)
         result = await mcp.call_tool("vpn_status", {})
-        structured: dict[str, Any] = result.structured_content
+        structured = result.structured_content
+        assert structured is not None
         assert structured["healthy"] is True
         assert structured["is_university_ip"] is True

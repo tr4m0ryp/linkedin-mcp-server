@@ -138,11 +138,15 @@ async def collect_status(settings: VpnSettings) -> dict[str, Any]:
     handshake_task = _run(_handshake_argv(settings), _READ_TIMEOUT_SECONDS)
     egress_task = probe_egress_ip(settings)
 
-    (active_rc, active_out, _active_err), (
-        _hs_rc,
-        hs_out,
-        _hs_err,
-    ), egress = await asyncio.gather(active_task, handshake_task, egress_task)
+    (
+        (active_rc, active_out, _active_err),
+        (
+            _hs_rc,
+            hs_out,
+            _hs_err,
+        ),
+        egress,
+    ) = await asyncio.gather(active_task, handshake_task, egress_task)
 
     service_active = parse_is_active(active_out)
     age = handshake_age_seconds(hs_out)
