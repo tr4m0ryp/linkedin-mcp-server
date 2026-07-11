@@ -29,10 +29,14 @@ never imports the OAuth stack.
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 from fastmcp.server.auth import AuthProvider
 
 from linkedin_mcp_server.config.schema import ConfigurationError, ServerConfig
+
+if TYPE_CHECKING:
+    from fastmcp.server.auth.auth import TokenVerifier
 
 logger = logging.getLogger(__name__)
 
