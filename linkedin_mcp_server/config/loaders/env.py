@@ -36,6 +36,10 @@ class EnvironmentKeys:
     IMPORT_FROM_BROWSER = "IMPORT_FROM_BROWSER"
     AUTO_IMPORT_FROM_BROWSER = "AUTO_IMPORT_FROM_BROWSER"
     EAGER_FULL_CHROMIUM = "EAGER_FULL_CHROMIUM"
+    # Auth for the streamable-http transport (see linkedin_mcp_server.auth).
+    MCP_API_KEY = "MCP_API_KEY"
+    WORKOS_AUTHKIT_DOMAIN = "WORKOS_AUTHKIT_DOMAIN"
+    MCP_BASE_URL = "MCP_BASE_URL"
 
 
 def load_from_env(config: AppConfig) -> AppConfig:
