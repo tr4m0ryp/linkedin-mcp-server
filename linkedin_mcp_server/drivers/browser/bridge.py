@@ -143,7 +143,7 @@ async def _bridge_runtime_profile(
     launch_options: dict[str, str],
     viewport: dict[str, int],
     persist_runtime: bool,
-) -> "BrowserManager":
+) -> BrowserManager:
     source_profile_dir = get_source_profile_dir()
     bridge_started_at = utcnow_iso()
     clear_runtime_profile(runtime_id, source_profile_dir)
