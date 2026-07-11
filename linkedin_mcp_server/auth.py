@@ -81,7 +81,7 @@ def build_auth(config: ServerConfig) -> AuthProvider | None:
     return bearer
 
 
-def _static_bearer(api_key: str) -> AuthProvider:
+def _static_bearer(api_key: str) -> TokenVerifier:
     """Static bearer verifier accepting ``Authorization: Bearer $MCP_API_KEY``."""
     from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
 
