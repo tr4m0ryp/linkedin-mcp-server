@@ -1,15 +1,14 @@
 """
 Patchright browser management for LinkedIn scraping.
 
-Provides async browser lifecycle management using BrowserManager with persistent
-context. Implements a singleton pattern for browser reuse across tool calls with
-automatic profile persistence. Split across submodules to stay under the
-per-file line cap: this module holds the singleton state, context building, the
-create/close lifecycle, and the profile/headless accessors; ``feed_auth`` the
-``/feed/`` auth probe; ``bridge`` runtime-profile bridging and imported-cookie
-validation; ``session_checks`` the session-validation helpers. Names tests patch
-here (``BrowserManager``, ``get_config``, ``get_runtime_id``) resolve in this
-namespace; the submodule helpers are re-exported below unchanged.
+Async browser lifecycle via BrowserManager with a persistent-context singleton
+reused across tool calls. Split across submodules to stay under the per-file
+line cap: this module holds the singleton state, context building, and the
+create/close lifecycle; ``feed_auth`` the ``/feed/`` auth probe; ``bridge``
+runtime-profile bridging and imported-cookie validation; ``session_checks`` the
+session-validation helpers; ``profiles`` the profile-dir accessors. Names tests
+patch here (``BrowserManager``, ``get_config``, ``get_runtime_id``) resolve in
+this namespace; submodule helpers are re-exported below unchanged.
 """
 
 import asyncio
