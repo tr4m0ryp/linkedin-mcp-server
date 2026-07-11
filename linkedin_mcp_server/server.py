@@ -12,11 +12,13 @@ from fastmcp import FastMCP
 from fastmcp.server.lifespan import lifespan
 
 from linkedin_mcp_server import __version__
+from linkedin_mcp_server.auth import build_auth
 from linkedin_mcp_server.bootstrap import (
     get_runtime_policy,
     initialize_bootstrap,
     start_background_browser_setup_if_needed,
 )
+from linkedin_mcp_server.config import get_config
 from linkedin_mcp_server.config.schema import DEFAULT_TOOL_TIMEOUT_SECONDS
 from linkedin_mcp_server.drivers.browser import close_browser
 from linkedin_mcp_server.error_handler import raise_tool_error
