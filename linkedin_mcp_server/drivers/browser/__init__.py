@@ -29,9 +29,8 @@ from linkedin_mcp_server.session_state import (
 logger = logging.getLogger(__name__)
 
 
-# Default persistent profile directory
+# Default persistent profile directory; singleton browser state
 DEFAULT_PROFILE_DIR = Path.home() / ".linkedin-mcp" / "profile"
-# Global browser instance (singleton)
 _browser: BrowserManager | None = None
 _browser_cookie_export_path: Path | None = None
 _headless: bool = True
