@@ -146,6 +146,76 @@ async def test_export_storage_state_requires_context(tmp_path):
     assert exported is False
 
 
+def test_build_proxy_options_inert_without_server(monkeypatch):
+    monkeypatch.delenv("LINKEDIN_PROXY_SERVER", raising=False)
+    assert build_proxy_options() is None
+
+
+def test_build_proxy_options_server_only(monkeypatch):
+    monkeypatch.setenv("LINKEDIN_PROXY_SERVER", "http://proxy.example:8080")
+    monkeypatch.delenv("LINKEDIN_PROXY_USERNAME", raising=False)
+    monkeypatch.delenv("LINKEDIN_PROXY_PASSWORD", raising=False)
+
+    assert build_proxy_options() == {"server": "http://proxy.example:8080"}
+
+
+def test_build_proxy_options_with_credentials(monkeypatch):
+    monkeypatch.setenv("LINKEDIN_PROXY_SERVER", "http://proxy.example:8080")
+    monkeypatch.setenv("LINKEDIN_PROXY_USERNAME", "user")
+    monkeypatch.setenv("LINKEDIN_PROXY_PASSWORD", "secret")
+
+    assert build_proxy_options() == {
+        "server": "http://proxy.example:8080",
+        "username": "user",
+        "password": "secret",
+    }
+
+
+def test_build_context_options_injects_proxy_from_env(monkeypatch):
+    monkeypatch.setenv("LINKEDIN_PROXY_SERVER", "socks5://proxy.example:1080")
+    monkeypatch.delenv("LINKEDIN_PROXY_USERNAME", raising=False)
+    monkeypatch.delenv("LINKEDIN_PROXY_PASSWORD", raising=False)
+
+    options = build_context_options(
+        headless=True,
+        slow_mo=0,
+        viewport={"width": 1280, "height": 720},
+        user_agent=None,
+        launch_options={},
+    )
+
+    assert options["proxy"] == {"server": "socks5://proxy.example:1080"}
+
+
+def test_build_context_options_no_proxy_when_unset(monkeypatch):
+    monkeypatch.delenv("LINKEDIN_PROXY_SERVER", raising=False)
+
+    options = build_context_options(
+        headless=True,
+        slow_mo=0,
+        viewport={"width": 1280, "height": 720},
+        user_agent=None,
+        launch_options={},
+    )
+
+    assert "proxy" not in options
+
+
+def test_build_context_options_explicit_proxy_wins(monkeypatch):
+    monkeypatch.setenv("LINKEDIN_PROXY_SERVER", "http://env-proxy.example:8080")
+    explicit = {"server": "http://explicit.example:3128"}
+
+    options = build_context_options(
+        headless=True,
+        slow_mo=0,
+        viewport={"width": 1280, "height": 720},
+        user_agent=None,
+        launch_options={"proxy": explicit},
+    )
+
+    assert options["proxy"] == explicit
+
+
 @pytest.mark.asyncio
 async def test_close_is_idempotent_and_resets_state(tmp_path):
     browser = BrowserManager(user_data_dir=tmp_path / "profile")
