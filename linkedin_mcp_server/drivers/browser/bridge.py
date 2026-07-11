@@ -18,7 +18,7 @@ from linkedin_mcp_server.common_utils import (
     secure_mkdir,
     utcnow_iso,
 )
-from linkedin_mcp_server.core import AuthenticationError
+from linkedin_mcp_server.core import AuthenticationError, BrowserManager
 from linkedin_mcp_server.debug_trace import record_page_trace
 from linkedin_mcp_server.debug_utils import stabilize_navigation
 from linkedin_mcp_server.drivers.browser import _launch_options, _make_browser
