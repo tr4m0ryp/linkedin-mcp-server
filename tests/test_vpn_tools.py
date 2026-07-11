@@ -204,14 +204,12 @@ class TestRegistrationGate:
         monkeypatch.setattr(vpn_probe, "_run", _fake_run(egress="145.10.20.30"))
 
         from fastmcp import FastMCP
-        from fastmcp.tools import FunctionTool
 
         from linkedin_mcp_server.tools.vpn import register_vpn_tools
 
         mcp = FastMCP("test")
         register_vpn_tools(mcp)
-        tool = await mcp.get_tool("vpn_status")
-        assert tool is not None
-        result: dict[str, Any] = await FunctionTool.from_tool(tool).fn()  # type: ignore[attr-defined]
-        assert result["healthy"] is True
-        assert result["is_university_ip"] is True
+        result = await mcp.call_tool("vpn_status", {})
+        structured: dict[str, Any] = result.structured_content
+        assert structured["healthy"] is True
+        assert structured["is_university_ip"] is True
