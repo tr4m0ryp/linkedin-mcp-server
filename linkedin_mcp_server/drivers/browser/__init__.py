@@ -1,14 +1,13 @@
-"""
-Patchright browser management for LinkedIn scraping.
+"""Patchright browser management for LinkedIn scraping.
 
-Async browser lifecycle via BrowserManager with a persistent-context singleton
-reused across tool calls. Split across submodules to stay under the per-file
-line cap: this module holds the singleton state, context building, and the
-create/close lifecycle; ``feed_auth`` the ``/feed/`` auth probe; ``bridge``
-runtime-profile bridging and imported-cookie validation; ``session_checks`` the
-session-validation helpers; ``profiles`` the profile-dir accessors. Names tests
-patch here (``BrowserManager``, ``get_config``, ``get_runtime_id``) resolve in
-this namespace; submodule helpers are re-exported below unchanged.
+Async BrowserManager lifecycle with a persistent-context singleton reused across
+tool calls. Split across submodules to stay under the per-file line cap: this
+module holds the singleton state, context building, the create/close lifecycle,
+and the profile/headless accessors; ``feed_auth`` the ``/feed/`` auth probe;
+``bridge`` runtime-profile bridging and imported-cookie validation;
+``session_checks`` the session-validation helpers. Names tests patch here
+(``BrowserManager``, ``get_config``, ``get_runtime_id``, ``get_source_profile_dir``)
+resolve in this namespace; submodule helpers are re-exported below unchanged.
 """
 
 import asyncio
@@ -17,12 +16,13 @@ from pathlib import Path
 
 from linkedin_mcp_server.config import get_config
 from linkedin_mcp_server.core import AuthenticationError, BrowserManager
-from linkedin_mcp_server.drivers.browser.profiles import get_profile_dir, profile_exists
 from linkedin_mcp_server.session_state import (
     get_runtime_id,
+    get_source_profile_dir,
     load_runtime_state,
     load_source_state,
     portable_cookie_path,
+    profile_exists as session_profile_exists,
     runtime_profile_dir,
     runtime_storage_state_path,
 )
