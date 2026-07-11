@@ -30,6 +30,7 @@ from linkedin_mcp_server.tools.feed import register_feed_tools
 from linkedin_mcp_server.tools.job import register_job_tools
 from linkedin_mcp_server.tools.messaging import register_messaging_tools
 from linkedin_mcp_server.tools.person import register_person_tools
+from linkedin_mcp_server.tools.vpn import register_vpn_tools, vpn_enabled
 
 logger = logging.getLogger(__name__)
 
