@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 import shutil
 import sqlite3
-import tempfile
+import tempfile  # noqa: F401  (patch seam: tests patch extract.tempfile.mkdtemp)
 
 from linkedin_mcp_server.browser_import.discovery import (
     SUPPORTED_BROWSERS,
@@ -223,3 +223,40 @@ def has_undecryptable_li_at(profile: BrowserProfile) -> bool:
     """
     meta = read_li_at_meta(profile)
     return meta is not None and meta.app_bound
+
+
+__all__ = [
+    "BrowserProfile",
+    "LiAtMeta",
+    "LinkedInCookie",
+    "SUPPORTED_BROWSERS",
+    "V20EncryptedError",
+    "_CBC_IV",
+    "_HOST_KEY_PREFIX_LEN",
+    "_HOST_KEY_PREFIX_MIN_VERSION",
+    "_KEY_LENGTH",
+    "_LINUX_FALLBACK_PASSWORD",
+    "_LINUX_ITERATIONS",
+    "_MACOS_ITERATIONS",
+    "_SALT",
+    "_SAMESITE_MAP",
+    "_WINDOWS_EPOCH_OFFSET_SECONDS",
+    "_chromium_utc_to_unix",
+    "_cookie_columns",
+    "_copy_cookies_db",
+    "_current_os",
+    "_decrypt_cbc",
+    "_decrypt_gcm_v10",
+    "_decrypt_value",
+    "_derive_cbc_key",
+    "_expires_to_unix",
+    "_linux_safe_storage_password",
+    "_macos_safe_storage_password",
+    "_meta_version",
+    "_resolve_keystore",
+    "_verify_host_key_prefix",
+    "_windows_master_key",
+    "extract_linkedin_cookies",
+    "has_undecryptable_li_at",
+    "read_li_at_meta",
+]

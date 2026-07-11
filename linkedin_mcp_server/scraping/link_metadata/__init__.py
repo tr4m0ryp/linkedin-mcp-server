@@ -169,3 +169,43 @@ def _reference_score(reference: Reference) -> tuple[int, int, int | float]:
 def _text_score(text: str | None) -> int | float:
     """Prefer richer labels while scoring missing text as strictly worst."""
     return len(text) if text else float("-inf")
+
+
+__all__ = [
+    "RawReference",
+    "Reference",
+    "ReferenceKind",
+    "_COMPANY_PATH_RE",
+    "_CONNECTIONS_FOLLOW_RE",
+    "_CONTEXT_LABELS",
+    "_DUPLICATE_HALVES_RE",
+    "_FEED_PATH_RE",
+    "_FIRST_URN_RE",
+    "_GENERIC_LABELS",
+    "_JOB_PATH_RE",
+    "_MAX_REDIRECT_UNWRAP_DEPTH",
+    "_MESSAGING_THREAD_PATH_RE",
+    "_NEWSLETTER_PATH_RE",
+    "_PERSON_PATH_RE",
+    "_PULSE_PATH_RE",
+    "_SCHOOL_PATH_RE",
+    "_SECTION_CONTEXTS",
+    "_URL_LIKE_RE",
+    "_WHITESPACE_RE",
+    "_choose_better_reference",
+    "_first_company_urn_from_query",
+    "_is_linkedin_chrome",
+    "_is_linkedin_host",
+    "_label_sort_key",
+    "_reference_score",
+    "_text_score",
+    "build_references",
+    "choose_reference_text",
+    "classify_link",
+    "clean_heading",
+    "clean_label",
+    "dedupe_references",
+    "derive_context",
+    "normalize_reference",
+    "normalize_url",
+]
